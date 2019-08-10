@@ -6,15 +6,32 @@ import RPi.GPIO as IO
 dev = InputDevice('/dev/input/event0')
 
 IO.setwarnings(False)           
-IO.setmode (IO.BCM)        
-IO.setup(19,IO.OUT)           
-IO.setup(13,IO.OUT)           
+IO.setmode (IO.BCM)       
 
-p = IO.PWM(19,100)          
-p2 = IO.PWM(13,100)          
+IO.setup(19,IO.OUT)     # inB 2      
+IO.setup(13,IO.OUT)     # inB 1   
+IO.setup(26,IO.OUT)     # PWM B
+
+IO.setup(16,IO.OUT)     #inA 2   
+IO.setup(20,IO.OUT)     #inA 1
+IO.setup(21,IO.OUT)     # PWM A
+
+IO.setup(12,IO.OUT)     #eneble motor
+
+p = IO.PWM(26,100)          
+p2 = IO.PWM(21,100)          
 
 p.start(0)                              
-p2.start(0)         
+p2.start(0)  
+
+IO.output(12,1)
+
+
+IO.output(19,0)
+IO.output(13,1)
+IO.output(16,0)
+IO.output(20,1)
+
 
 avg_motor1 = []
 avg_motor2 = []
@@ -65,11 +82,25 @@ def motor2(x,y):
     p2.ChangeDutyCycle(x)
     
 
+def revers(x):
+    if x == 0:
+        IO.output(19,0)
+        IO.output(13,1)
+        IO.output(16,0)
+        IO.output(20,1)
+    else:
+        IO.output(19,1)
+        IO.output(13,0)
+        IO.output(16,1)
+        IO.output(20,0)
+
 if __name__ == "__main__":
     
     initQueue()
     m1 = m2 = m3 = 0
-    
+    revs = 0
+    resv2 = 0
+
     try:
         while 1:
             for event in dev.read_loop():
@@ -85,27 +116,17 @@ if __name__ == "__main__":
                     if event.code == 0: 
                         m3 = map(event.value,0,255,-100,100)
 
-
+                if event.type == ecodes.EV_KEY:
+                    btn = categorize(event).keycode
+                    if btn == 'BTN_Z':
+                        revs += 1
+                    if revs % 2 == 0 and resv2 == 0:
+                        resv2 = 1
+                        revers(resv2)
+                    elif revs % 2 == 0 and resv2 == 1:
+                        resv2 = 0
+                        revers(resv2)
 
     except KeyboardInterrupt:
         print("ERROR")
         
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
